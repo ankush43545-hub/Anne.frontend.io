@@ -1,97 +1,86 @@
-const API_URL = 'https://anne-io.onrender.com'; 
-const CHAT_FEED = document.getElementById('chat-feed');
-const INPUT_FIELD = document.getElementById('user-input');
-const SEND_BTN = document.getElementById('send-btn');
+// FIXED: Added '/chat' to the URL
+const API_URL = 'https://anne-io.onrender.com/chat'; 
 
-// Auto-scroll
-const scrollToBottom = () => {
-    CHAT_FEED.scrollTop = CHAT_FEED.scrollHeight;
-};
+const feed = document.getElementById('chat-feed');
+const input = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+let history = []; // To keep conversation context
 
-// Message Creator
-function addMessage(text, sender) {
-    const msgDiv = document.createElement('div');
-    msgDiv.classList.add('message', sender);
-    msgDiv.innerText = text;
+// Helper: Scroll
+const scroll = () => feed.scrollTo(0, feed.scrollHeight);
 
-    // Small copy option
-    if (sender === 'bot') {
-        const copyBtn = document.createElement('div');
-        copyBtn.classList.add('copy-trigger');
-        copyBtn.innerText = 'Copy';
-        copyBtn.onclick = () => {
-            navigator.clipboard.writeText(text);
-            copyBtn.innerText = 'Copied';
-        };
-        msgDiv.appendChild(copyBtn);
+// Helper: Add Message
+function addMsg(text, sender) {
+    const div = document.createElement('div');
+    div.className = `message ${sender}`;
+    div.innerText = text;
+    
+    if(sender === 'bot') {
+        const copy = document.createElement('div');
+        copy.className = 'copy-btn';
+        copy.innerText = 'Copy';
+        copy.onclick = () => { navigator.clipboard.writeText(text); copy.innerText = 'Copied'; };
+        div.appendChild(copy);
     }
-
-    CHAT_FEED.appendChild(msgDiv);
-    scrollToBottom();
+    
+    feed.appendChild(div);
+    scroll();
 }
 
-// Typing Indicator
-let typingDiv = null;
+// Helper: Typing
+let typingDiv;
 function showTyping() {
-    if (typingDiv) return;
     typingDiv = document.createElement('div');
-    typingDiv.classList.add('typing');
+    typingDiv.className = 'typing';
     typingDiv.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
-    CHAT_FEED.appendChild(typingDiv);
-    scrollToBottom();
+    feed.appendChild(typingDiv);
+    scroll();
 }
+function hideTyping() { if(typingDiv) typingDiv.remove(); }
 
-function removeTyping() {
-    if (typingDiv) {
-        typingDiv.remove();
-        typingDiv = null;
-    }
-}
-
-// Send Logic
-async function sendMessage() {
-    const text = INPUT_FIELD.value.trim();
+// Main Send Logic
+async function send() {
+    const text = input.value.trim();
     if (!text) return;
 
-    // 1. UI Updates
-    addMessage(text, 'user');
-    INPUT_FIELD.value = '';
+    // 1. Show User Message
+    addMsg(text, 'user');
+    input.value = '';
     showTyping();
 
-    // 2. Backend Call
+    // 2. Add to History
+    history.push({ role: "user", content: text });
+
     try {
-        // NOTE: Attempting standard Fetch. 
-        // If this fails with "Failed to fetch", it is a CORS error on the Render server.
-        const response = await fetch(API_URL, {
+        const res = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text }) // Trying 'message' key first
+            body: JSON.stringify({ 
+                message: text,
+                history: history 
+            })
         });
 
-        if (!response.ok) {
-            throw new Error(`Server Error: ${response.status}`);
-        }
+        if (!res.ok) throw new Error('Server Error');
 
-        const data = await response.json();
+        const data = await res.json();
         
-        // Support multiple common JSON return keys (response, reply, message, text)
-        const botText = data.response || data.reply || data.message || data.text || "Connected, but no text returned.";
+        // FIXED: Using 'data.reply' because app.py returns {"reply": ...}
+        const botReply = data.reply || "Connected, but empty reply.";
         
-        removeTyping();
-        addMessage(botText, 'bot');
+        hideTyping();
+        addMsg(botReply, 'bot');
+        
+        // Update history
+        history.push({ role: "assistant", content: botReply });
 
-    } catch (error) {
-        console.error("Connection Failed:", error);
-        removeTyping();
-        addMessage("Error: I can't reach the server. (Check Console for CORS/Network details)", 'bot');
+    } catch (err) {
+        console.error(err);
+        hideTyping();
+        addMsg("Connection failed. (Check Console)", 'bot');
     }
 }
 
-// Listeners
-SEND_BTN.addEventListener('click', sendMessage);
-INPUT_FIELD.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-});
-document.getElementById('refresh-btn').addEventListener('click', () => {
-    CHAT_FEED.innerHTML = '';
-});
+sendBtn.onclick = send;
+input.onkeypress = (e) => { if(e.key === 'Enter') send(); };
+document.getElementById('refresh-btn').onclick = () => { feed.innerHTML = ''; history = []; };
