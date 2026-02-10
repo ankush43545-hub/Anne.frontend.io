@@ -3,56 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chat with Anne</title>
+    <title>Anne</title>
     <link rel="stylesheet" href="style.css">
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 <body>
 
-    <div class="background-blobs">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
-    </div>
-
-    <div class="chat-container">
-        
-        <header class="chat-header">
-            <div class="header-info">
-                <div class="avatar">
-                    <span>A</span>
-                </div>
-                <div class="name-block">
-                    <h1>Anne</h1>
-                    <span class="status">Always here for you</span>
-                </div>
+    <div class="app-container">
+        <header class="glass-header">
+            <div class="header-content">
+                <div class="name-title">Anne</div>
             </div>
-            <button id="refresh-btn" class="icon-btn" aria-label="Restart Chat">
+            <button id="refresh-btn" class="refresh-icon">
                 <ion-icon name="refresh-outline"></ion-icon>
             </button>
         </header>
 
         <div id="chat-feed" class="chat-feed">
-            <div class="message bot intro">
-                <div class="bubble">
-                    Hello! I'm Anne. I'm listening... what's on your mind?
-                </div>
-                <div class="msg-meta">
-                    <span class="copy-btn">Copy</span>
-                </div>
             </div>
-        </div>
 
-        <div class="input-area">
-            <div class="glass-input-wrapper">
-                <input type="text" id="user-input" placeholder="Type a message..." autocomplete="off">
+        <div class="input-zone">
+            <div class="glass-pill">
+                <input type="text" id="user-input" placeholder="Message..." autocomplete="off">
                 <button id="send-btn">
-                    <ion-icon name="arrow-up-circle"></ion-icon>
+                    <ion-icon name="arrow-up"></ion-icon>
                 </button>
             </div>
         </div>
-
     </div>
 
     <script src="script.js"></script>
